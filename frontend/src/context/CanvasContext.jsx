@@ -1,7 +1,7 @@
 import { createContext, useContext, useRef } from "react"
 import { decrement, increment } from "../store/canvasSlice";
 import { useSelector, useDispatch } from "react-redux";
-import { setCurrPos, setIsDrawing, setLastPos, setShapes } from "../store/drawingSlice";
+import { setCurrPos, setIsDrawing, setLastPos, setShapes, setTool, updateStyle } from "../store/drawingSlice";
 const CanvasContext = createContext()
 
 
@@ -21,6 +21,9 @@ const CanvasProvider = ({ children }) => {
         setIsDrawing: (val) => dispatch(setIsDrawing(val)),
         setShapes: (shape) => dispatch(setShapes(shape)),
         setLastPos: (e) => dispatch(setLastPos(e)),
+        setTool: (t) => dispatch(setTool(t)),
+        setSelectedShapes: (id) => dispatch(setSelectedShapes(id)),
+        updateStyle: (data) => dispatch(updateStyle(data))
     }
 
     return (

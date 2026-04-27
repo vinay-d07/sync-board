@@ -1,21 +1,28 @@
 
+import { useEffect } from 'react';
 import './App.css'
+import { ToolBar } from './canvasLayer/canvasComponents/ToolBar';
 import { CanvasRender } from './canvasLayer/CanvasRender';
-import { Button } from './components/ui/button';
+
 import { useCanvasContext } from './context/CanvasContext'
 import { useCanvas } from './hooks/useCanvas';
+import { ContextMenu } from './canvasLayer/canvasComponents/ContextMenu';
 
 function App() {
-  const { isDrawing, currPos, lastpos, canvasRef } = useCanvasContext();
+  const { canvasRef, tool, setTool } = useCanvasContext();
   const { onMouseDown, onMouseUp, onMouseMove } = useCanvas(canvasRef)
+
+  useEffect(() => { console.log(tool) }, [tool])
   return (
     <>
-      <div className=''>
-        isDrawing : {isDrawing ? "yes" : "no"}, ||  currPos : {currPos.x},{currPos.y} ||, lastPos : {lastpos.x} , {lastpos.y}
 
+      <div className='flex items-center justify-center'>
+
+
+        <ToolBar activeTool={tool} setTool={setTool} />
         <CanvasRender onMouseUp={onMouseUp} onMouseDown={onMouseDown} onMouseMove={onMouseMove} canvasRef={canvasRef} className="border-2 border-black" />
-
       </div>
+      {(tool !== "cursor" && tool !== "hand") && <ContextMenu />}
     </>
   )
 }

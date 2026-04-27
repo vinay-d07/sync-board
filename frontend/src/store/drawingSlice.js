@@ -12,8 +12,15 @@ const drawingSlice = createSlice({
         lastpos: {
             x: 0,
             y: 0
+        },
+        tool: "cursor",
+        selectedShapeIds: [],
+        style: {
+            strokeColor: "#000000",
+            fillColor: "transparent",
+            strokeWidth: 2,
+            opacity: 1,
         }
-
     },
     reducers: {
         setIsDrawing: (state, action) => {
@@ -30,10 +37,19 @@ const drawingSlice = createSlice({
             state.lastpos.x = action.payload.x;
             state.lastpos.y = action.payload.y
         },
+        setTool: (state, action) => {
+            state.tool = action.payload
+        },
+        setSelectedShapes: (state, action) => {
+            state.selectedShapeIds = Array.isArray(action.payload) ? action.payload : [action.payload].filter(Boolean);
+        },
+        updateStyle: (state, action) => {
+            Object.assign(state.style, action.payload);
+        }
 
     }
 
 })
 
-export const { setIsDrawing, setCurrPos, setShapes, setLastPos } = drawingSlice.actions;
+export const { setIsDrawing, setCurrPos, setShapes, setLastPos, setTool, setSelectedShapes ,updateStyle} = drawingSlice.actions;
 export default drawingSlice.reducer 
