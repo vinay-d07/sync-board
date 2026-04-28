@@ -14,7 +14,7 @@ export const pencilTool = {
         const path = state.currentPath.current;
         if (!path.length) return null;
 
-        return {
+        const shape = {
             id: Date.now().toString(),
             type: 'pencil',
             path: [...path],
@@ -22,6 +22,8 @@ export const pencilTool = {
             lineWidth: state.lineWidth || 2,
             timestamp: Date.now()
         };
+        console.log('Creating pencil shape:', shape);
+        return shape;
     },
 
     draw(ctx, shape) {

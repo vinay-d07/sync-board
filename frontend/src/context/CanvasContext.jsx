@@ -1,7 +1,7 @@
 import { createContext, useContext, useRef } from "react"
 import { decrement, increment } from "../store/canvasSlice";
 import { useSelector, useDispatch } from "react-redux";
-import { setCurrPos, setIsDrawing, setLastPos, setShapes, setTool, updateStyle } from "../store/drawingSlice";
+import { setCurrPos, setIsDrawing, setLastPos, setSelectedShapes, setShapes, setTool, updateStyle, setSelectionStart, setSelectionEnd, clearSelection, startDrag, endDrag, updateShapes } from "../store/drawingSlice";
 const CanvasContext = createContext()
 
 
@@ -23,7 +23,13 @@ const CanvasProvider = ({ children }) => {
         setLastPos: (e) => dispatch(setLastPos(e)),
         setTool: (t) => dispatch(setTool(t)),
         setSelectedShapes: (id) => dispatch(setSelectedShapes(id)),
-        updateStyle: (data) => dispatch(updateStyle(data))
+        updateStyle: (data) => dispatch(updateStyle(data)),
+        setSelectionStart: (pos) => dispatch(setSelectionStart(pos)),
+        setSelectionEnd: (pos) => dispatch(setSelectionEnd(pos)),
+        clearSelection: () => dispatch(clearSelection()),
+        startDrag: (dragData) => dispatch(startDrag(dragData)),
+        endDrag: () => dispatch(endDrag()),
+        updateShapes: (shapes) => dispatch(updateShapes(shapes))
     }
 
     return (

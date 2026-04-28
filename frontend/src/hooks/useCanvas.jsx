@@ -1,16 +1,18 @@
 import { useCanvasContext } from "../context/CanvasContext";
 import { pencilTool } from "../utils/drawtools/PencilTool";
 import { useRef, useEffect } from "react";
-import { SelectTool } from "../utils/drawtools/SelectTool";
+
 import { rectTool } from "../utils/drawtools/Rectangle";
 import { circleTool } from "../utils/drawtools/Circle";
 import { lineTool } from "../utils/drawtools/LineTool";
 import { rhombusTool } from "../utils/drawtools/rhombus";
+import { SelectTool } from "../utils/drawtools/SelectTool";
+import { drawSelectionBoundaries, getHandleAtPoint, getCursorForHandle } from "../utils/selectionBoundaries";
+import { getShapeAtPoint } from "../utils/getShapeAtpoint";
 
 export const useCanvas = (canvasRef) => {
     const {
         isDrawing,
-        currPos,
         setCurrPos,
         setIsDrawing,
         tool,
@@ -19,13 +21,23 @@ export const useCanvas = (canvasRef) => {
         selectedShapeIds,
         setSelectedShapes,
         style,
-        updateStyle
+        selection,
+        setSelectionStart,
+        setSelectionEnd,
+        clearSelection,
+        drag,
+        startDrag,
+        endDrag,
+        updateShapes,
+
     } = useCanvasContext();
 
     const currentPath = useRef([]);
     const drawingStartPos = useRef(null);
 
+
     const ToolMap = {
+        cursor: SelectTool,
         pencil: pencilTool,
         select: SelectTool,
         rectangle: rectTool,
@@ -40,6 +52,29 @@ export const useCanvas = (canvasRef) => {
 
     const currentPosRef = useRef(null);
 
+    const updateCursor = (pos) => {
+        if (!canvasRef.current) return;
+
+        // Check if hovering over a resize handle
+        if (selectedShapeIds.length > 0) {
+            const handleType = getHandleAtPoint(pos, selectedShapeIds, shapes);
+            if (handleType) {
+                canvasRef.current.style.cursor = getCursorForHandle(handleType);
+                return;
+            }
+        }
+
+        // Check if hovering over a shape
+        const shape = getShapeAtPoint(pos, shapes);
+        if (shape && selectedShapeIds.includes(shape.id)) {
+            canvasRef.current.style.cursor = 'move';
+        } else if (shape) {
+            canvasRef.current.style.cursor = 'pointer';
+        } else {
+            canvasRef.current.style.cursor = 'default';
+        }
+    };
+
     const getToolState = () => ({
         shapes,
         setShapes,
@@ -48,6 +83,14 @@ export const useCanvas = (canvasRef) => {
         currentPath,
         startPos: drawingStartPos,
         currentPos: currentPosRef,
+        selection,
+        setSelectionStart,
+        setSelectionEnd,
+        clearSelection,
+        drag,
+        startDrag,
+        endDrag,
+        updateShapes,
         strokeStyle: style.strokeColor,
         lineWidth: style.strokeWidth,
         fillColor: style.fillColor,
@@ -64,7 +107,7 @@ export const useCanvas = (canvasRef) => {
 
         const state = getToolState();
 
-        activeToolFn?.onMouseDown(ctx, pos, state);
+        activeToolFn?.onMouseDown(ctx, pos, state, e);
 
         if (tool !== "pencil") {
             drawingStartPos.current = pos;
@@ -76,7 +119,6 @@ export const useCanvas = (canvasRef) => {
 
 
     const onMouseMove = (e) => {
-        if (!isDrawing || !ctx) return;
         const rect = canvasRef.current.getBoundingClientRect();
         const pos = {
             x: e.clientX - rect.left,
@@ -84,8 +126,16 @@ export const useCanvas = (canvasRef) => {
         };
         currentPosRef.current = pos;
 
+        // Update cursor for select tool
+        if (tool === 'select' || tool === 'cursor') {
+            updateCursor(pos);
+        }
+
+        if (!isDrawing || !ctx) return;
+
         const state = getToolState();
         redrawCanvas()
+
         activeToolFn?.onMouseMove(ctx, pos, state)
         setCurrPos(pos);
     };
@@ -100,17 +150,18 @@ export const useCanvas = (canvasRef) => {
 
         const state = getToolState();
 
-        activeToolFn?.onMouseUp(ctx, pos, state);
+        activeToolFn?.onMouseUp(ctx, pos, state, e);
 
 
         const shape = activeToolFn?.createShape?.(state);
 
         if (shape) {
+            console.log('Creating shape:', shape);
             setShapes(shape);
         }
 
 
-        currentPath.current.length = 0;;
+        currentPath.current.length = 0;
         drawingStartPos.current = null;
 
         setIsDrawing(false);
@@ -131,11 +182,11 @@ export const useCanvas = (canvasRef) => {
 
 
         if (isDrawing && activeToolFn?.drawPreview) {
-            if (tool === 'rectangle' || tool === 'circle' || tool === 'line' || tool === 'rhombus') {
-
+            if (tool === 'select' || tool === 'cursor') {
+                activeToolFn.drawPreview(ctx, getToolState());
+            } else if (tool === 'rectangle' || tool === 'circle' || tool === 'line' || tool === 'rhombus') {
                 activeToolFn.drawPreview(ctx, drawingStartPos.current, currentPosRef.current, style);
             } else {
-
                 activeToolFn.drawPreview(ctx, {
                     currentPath: currentPath,
                     startPos: drawingStartPos,
@@ -148,28 +199,21 @@ export const useCanvas = (canvasRef) => {
             }
         }
 
+        // Draw selection boundaries like Excalidraw
+        drawSelectionBoundaries(ctx, selectedShapeIds, shapes);
 
         if (typeof renderSelections === "function") {
             renderSelections(ctx, shapes, selectedShapeIds);
         }
     };
 
-    // Redraw canvas when shapes change
+
     useEffect(() => {
-        console.log("SHAPES", shapes)
+        console.log("selected :", selectedShapeIds)
+    }, [selectedShapeIds])
+    useEffect(() => {
         redrawCanvas();
-    }, [shapes]);
-
-    // Redraw canvas for preview when drawing
-    useEffect(() => {
-        if (isDrawing) {
-            redrawCanvas();
-        }
-    }, [currPos, isDrawing]);
-
-    useEffect(() => {
-        console.log(activeToolFn);
-    }, [tool]);
+    }, [shapes, selection, selectedShapeIds, drag]);
 
     return {
         onMouseDown,

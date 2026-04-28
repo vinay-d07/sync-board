@@ -15,6 +15,18 @@ const drawingSlice = createSlice({
         },
         tool: "cursor",
         selectedShapeIds: [],
+        selection: {
+            start: null,
+            end: null
+        },
+        drag: {
+            isDragging: false,
+            dragType: null, // 'move' or 'resize'
+            handleType: null, // 'nw', 'ne', 'sw', 'se', 'n', 's', 'w', 'e'
+            startPos: null,
+            originalBounds: null,
+            originalShapes: null
+        },
         style: {
             strokeColor: "#000000",
             fillColor: "transparent",
@@ -45,11 +57,45 @@ const drawingSlice = createSlice({
         },
         updateStyle: (state, action) => {
             Object.assign(state.style, action.payload);
+        },
+        setSelectionStart: (state, action) => {
+            state.selection.start = action.payload;
+        },
+        setSelectionEnd: (state, action) => {
+            state.selection.end = action.payload;
+        },
+        clearSelection: (state) => {
+            state.selection.start = null;
+            state.selection.end = null;
+        },
+        startDrag: (state, action) => {
+            const { dragType, handleType, startPos, originalBounds, originalShapes } = action.payload;
+            state.drag.isDragging = true;
+            state.drag.dragType = dragType;
+            state.drag.handleType = handleType;
+            state.drag.startPos = startPos;
+            state.drag.originalBounds = originalBounds;
+            state.drag.originalShapes = originalShapes;
+        },
+        updateDrag: (state, action) => {
+            // This will be handled by the tool during drag operations
+        },
+        endDrag: (state) => {
+            state.drag.isDragging = false;
+            state.drag.dragType = null;
+            state.drag.handleType = null;
+            state.drag.startPos = null;
+            state.drag.originalBounds = null;
+            state.drag.originalShapes = null;
+        },
+        updateShapes: (state, action) => {
+            // Replace shapes array entirely for bulk updates
+            state.shapes = action.payload;
         }
 
     }
 
 })
 
-export const { setIsDrawing, setCurrPos, setShapes, setLastPos, setTool, setSelectedShapes ,updateStyle} = drawingSlice.actions;
-export default drawingSlice.reducer 
+export const { setIsDrawing, setCurrPos, setShapes, setLastPos, setTool, setSelectedShapes, updateStyle, setSelectionStart, setSelectionEnd, clearSelection, startDrag, updateDrag, endDrag, updateShapes } = drawingSlice.actions;
+export default drawingSlice.reducer
